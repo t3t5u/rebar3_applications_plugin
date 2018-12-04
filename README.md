@@ -1,0 +1,1 @@
+# rebar3_applications_plugin
