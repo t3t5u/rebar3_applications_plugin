@@ -1,0 +1,7 @@
+{application,rebar3_applications_plugin,
+             [{description,"Automatically generate the applications in the application resource file."},
+              {vsn,"1.0.0"},
+              {applications,[kernel,stdlib]},
+              {licenses,["MIT"]},
+              {links,[{"Github",
+                       "https://github.com/t3t5u/rebar3_applications_plugin"}]}]}.
