@@ -76,9 +76,9 @@ add_application(Xref, AppInfo) ->
     ok.
 
 -spec map(Xref :: pid(), ProjectApps :: [rebar_app_info:t()]) -> Map when
-      Map          :: #{Application => {Sources :: Applications, Destinations :: Applications}},
+      Map          :: #{Application => {Sources :: Dependencies, Destinations :: Dependencies}},
       Application  :: atom(),
-      Applications :: ordsets:ordset(Application).
+      Dependencies :: ordsets:ordset(Application).
 map(Xref, ProjectApps) ->
     Map = maps:from_list([tuple(Xref, ProjectApps, AppInfo) || AppInfo <- ProjectApps]),
     ?DEBUG("Map: ~p~n", [Map]),
@@ -86,9 +86,9 @@ map(Xref, ProjectApps) ->
 
 -spec tuple(Xref :: pid(), ProjectApps :: [AppInfo], AppInfo) -> Tuple when
       AppInfo      :: rebar_app_info:t(),
-      Tuple        :: {Application, {Sources :: Applications, Destinations :: Applications}},
+      Tuple        :: {Application, {Sources :: Dependencies, Destinations :: Dependencies}},
       Application  :: atom(),
-      Applications :: ordsets:ordset(Application).
+      Dependencies :: ordsets:ordset(Application).
 tuple(Xref, ProjectApps, AppInfo) ->
     Application = ?APPLICATION(AppInfo),
     Applications = applications(AppInfo),
@@ -117,8 +117,7 @@ applications(AppInfo) -> ordsets:from_list(rebar_app_info:applications(AppInfo))
 -spec update(Map, AppInfo :: rebar_app_info:t()) -> Map when
       Map          :: #{Application => {Sources :: Dependencies, Destinations :: Dependencies}},
       Application  :: atom(),
-      Applications :: ordsets:ordset(Application),
-      Dependencies :: Applications.
+      Dependencies :: ordsets:ordset(Application).
 update(Map, AppInfo) ->
     Application = ?APPLICATION(AppInfo),
     Applications = ordsets:from_list(maps:keys(Map)),
@@ -147,7 +146,8 @@ destinations(Map, Application, Applications) ->
     ordsets:intersection(Applications, Destinations).
 
 -spec sort(Head :: List, Tail :: List, List) -> List when
-      List         :: [{Application, {Sources :: Dependencies, Destinations :: Dependencies}}],
+      List         :: [Tuple],
+      Tuple        :: {Application, {Sources :: Dependencies, Destinations :: Dependencies}},
       Application  :: atom(),
       Dependencies :: ordsets:ordset(Application).
 sort(Head, Tail, []) -> Head ++ Tail;
@@ -162,11 +162,10 @@ sort(Head, Tail, List) ->
     ?ASSERT([] =/= List -- Rest, "Detect circular dependencies: ~p~n", [List]),
     sort(Head ++ H, T ++ Tail, Rest).
 
--spec ordering({Application, {Sources, Destinations}}, {Application, {Sources, Destinations}}) -> boolean() when
+-spec ordering(Tuple, Tuple) -> boolean() when
+      Tuple        :: {Application, {Sources :: Dependencies, Destinations :: Dependencies}},
       Application  :: atom(),
-      Dependencies :: ordsets:ordset(Application),
-      Sources      :: Dependencies,
-      Destinations :: Dependencies.
+      Dependencies :: ordsets:ordset(Application).
 ordering({A, {[],  _}}, {B, {[],  _}}) -> A =< B;
 ordering({_, {[],  _}},             _) -> false;
 ordering(            _, {_, {[],  _}}) -> true;
@@ -191,7 +190,7 @@ replace_applications(Xref, Applications, Application, List) ->
 -spec append_dependencies(Xref :: pid(), Application, Applications, Dependencies) -> Dependencies when
       Application  :: atom(),
       Applications :: [Application],
-      Dependencies :: [Application].
+      Dependencies :: Applications.
 append_dependencies(Xref, Application, Applications, Dependencies) ->
     normalize_dependencies(Dependencies ++ ordsets:subtract(linearize_dependencies(Xref, Application, Applications), ordsets:from_list(Dependencies)), []).
 
